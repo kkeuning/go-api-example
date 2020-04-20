@@ -21,7 +21,7 @@ var initialUsers = []User{
 	},
 	{
 		FirstName:     "Russ",
-		MiddleInitial: "C",
+		MiddleInitial: "S",
 		LastName:      "Cox",
 	},
 }

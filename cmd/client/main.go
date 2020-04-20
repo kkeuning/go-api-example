@@ -38,7 +38,6 @@ func showUserByID(id int, apiKey *string) {
 	if apiKey != nil {
 		req.Header.Add("Authorization", *apiKey)
 	}
-	req.URL.Port()
 	resp, err := client.Do(req)
 	if err != nil {
 		os.Exit(1)

@@ -24,7 +24,7 @@ Client usage, demonstrating api key:
 ```
 bin/server -apikey=secret
 bin/client list-users -apikey=secret
-bin/client get-user id=2 -apikey=secret
+bin/client get-user -id=2 -apikey=secret
 ```
 
 Logging from the gorilla/handlers package is in use.

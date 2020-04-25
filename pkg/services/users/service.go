@@ -17,8 +17,8 @@ type Service interface {
 	Show(context.Context, *ShowPayload) (*models.User, error)
 	Delete(context.Context, *DeletePayload) error
 	Update(context.Context, *UpdatePayload) error
-	List(context.Context, *ListPayload) (models.UserCollection, error)
-	Create(context.Context, *models.User) (models.UserCollection, error)
+	List(context.Context, *ListPayload) (*models.UserCollection, error)
+	Create(context.Context, *models.User) (*models.UserCollection, error)
 }
 
 // NewUsersSvc ...
@@ -26,8 +26,8 @@ func NewUsersSvc(logger *logrus.Logger) (Service, error) {
 	return &usersSvc{logger}, nil
 }
 
-func (us *usersSvc) Create(ctx context.Context, payload *models.User) (models.UserCollection, error) {
-	var uc models.UserCollection
+func (us *usersSvc) Create(ctx context.Context, payload *models.User) (*models.UserCollection, error) {
+	var uc *models.UserCollection
 	return uc, nil
 }
 func (us *usersSvc) Delete(ctx context.Context, payload *DeletePayload) error {
@@ -45,22 +45,21 @@ func (e ErrorNotFound) Error() string {
 }
 
 // ListUsers ...
-func (us *usersSvc) List(ctx context.Context, payload *ListPayload) (result models.UserCollection, err error) {
+func (us *usersSvc) List(ctx context.Context, payload *ListPayload) (*models.UserCollection, error) {
 	if payload != nil {
 		for _, u := range models.Users.GetUsers() {
 			if u.ID == payload.ID {
-				result = models.UserCollection{
+				uc := &models.UserCollection{
 					Users: []models.User{u},
 				}
-				return
+				return uc, nil
 			}
 		}
-		err = &ErrorNotFound{}
-		return
+		return nil, &ErrorNotFound{}
 	}
 	// No id specified, list all users.
-	result = models.UserCollection{Users: models.Users.GetUsers()}
-	return
+	uc := &models.UserCollection{Users: models.Users.GetUsers()}
+	return uc, nil
 }
 
 // ShowUser ...

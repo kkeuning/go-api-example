@@ -1,10 +1,12 @@
 package auth
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strings"
 
+	"github.com/kkeuning/go-api-example/pkg/services"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -41,8 +43,9 @@ func (akm *APIKeyMiddleware) Middleware(next http.Handler) http.Handler {
 			key := r.Header.Get("Authorization")
 			if akm.KeyIsValid(key) {
 				log.Printf("User is authorized.")
+				ctx := context.WithValue(r.Context(), services.AuthorizationKey, key)
 				// Pass down the request to the next middleware (or final handler)
-				next.ServeHTTP(w, r)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 			// Write an error and return to stop the handler chain

@@ -13,26 +13,26 @@ import (
 )
 
 // Request is a standard request that will close the body and client
-func Request(action string, url string, auth *string, requestBody []byte) []byte {
+func Request(method string, url string, requestBody []byte, options ...func(*http.Request)) []byte {
 	client := &http.Client{}
 	var req *http.Request
 	if requestBody != nil {
-		r, err := http.NewRequest(action, url, bytes.NewBuffer(requestBody))
+		r, err := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
 		if err != nil {
 			os.Exit(1)
 		}
 		req = r
 	} else {
-		r, err := http.NewRequest(action, url, nil)
+		r, err := http.NewRequest(method, url, nil)
 		if err != nil {
 			os.Exit(1)
 		}
 		req = r
 	}
-	req.Close = true
-	if auth != nil {
-		req.Header.Add("Authorization", *auth)
+	for i := range options {
+		options[i](req)
 	}
+	req.Close = true
 	resp, err := client.Do(req)
 	if resp != nil {
 		defer resp.Body.Close()
@@ -50,9 +50,12 @@ func Request(action string, url string, auth *string, requestBody []byte) []byte
 
 func showUserByID(id int, apiKey *string) {
 	url := fmt.Sprintf("http://localhost:8090/api/v1/users/%d", id)
-	// reqBody := bytes.NewBuffer()
-	respBody := Request("GET", url, apiKey, nil)
-	fmt.Println(string(respBody))
+	opts := func(r *http.Request) {
+		if apiKey != nil {
+			r.Header.Add("Authorization", *apiKey)
+		}
+	}
+	respBody := Request(http.MethodGet, url, nil, opts)
 	var user models.User
 	if err := json.Unmarshal(respBody, &user); err != nil {
 		os.Exit(1)
@@ -62,9 +65,16 @@ func showUserByID(id int, apiKey *string) {
 
 func listUsers(apiKey *string) {
 	url := fmt.Sprintf("http://localhost:8090/api/v1/users")
-	respBody := Request("GET", url, apiKey, nil)
+	opts := func(r *http.Request) {
+		if apiKey != nil {
+			r.Header.Add("Authorization", *apiKey)
+		}
+	}
+	respBody := Request(http.MethodGet, url, nil, opts)
 	var out bytes.Buffer
-	json.Indent(&out, respBody, "", "    ")
+	if err := json.Indent(&out, respBody, "", "    "); err != nil {
+		os.Exit(1)
+	}
 	out.WriteTo(os.Stdout)
 	fmt.Println()
 	var users []models.User

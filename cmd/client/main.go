@@ -1,22 +1,37 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/kkeuning/go-api-example/pkg/models"
 )
 
-func listUsers(apiKey *string) {
+// Request is a standard request that will close the body and client
+func Request(action string, url string, auth *string, requestBody []byte) []byte {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://localhost:8090/api/v1/users", nil)
-	if err != nil {
-		os.Exit(1)
+	var req *http.Request
+	if requestBody != nil {
+		r, err := http.NewRequest(action, url, bytes.NewBuffer(requestBody))
+		if err != nil {
+			os.Exit(1)
+		}
+		req = r
+	} else {
+		r, err := http.NewRequest(action, url, nil)
+		if err != nil {
+			os.Exit(1)
+		}
+		req = r
 	}
 	req.Close = true
-	if apiKey != nil {
-		req.Header.Add("Authorization", *apiKey)
+	if auth != nil {
+		req.Header.Add("Authorization", *auth)
 	}
 	resp, err := client.Do(req)
 	if resp != nil {
@@ -26,36 +41,39 @@ func listUsers(apiKey *string) {
 		os.Exit(1)
 	}
 	// Read Response Body
-	respBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		os.Exit(1)
 	}
-	fmt.Println(string(respBody))
+	return responseBody
 }
 
 func showUserByID(id int, apiKey *string) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8090/api/v1/users/%d", id), nil)
-	if err != nil {
-		os.Exit(1)
-	}
-	req.Close = true
-	if apiKey != nil {
-		req.Header.Add("Authorization", *apiKey)
-	}
-	resp, err := client.Do(req)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		os.Exit(1)
-	}
-	// Read Response Body
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		os.Exit(1)
-	}
+	url := fmt.Sprintf("http://localhost:8090/api/v1/users/%d", id)
+	// reqBody := bytes.NewBuffer()
+	respBody := Request("GET", url, apiKey, nil)
 	fmt.Println(string(respBody))
+	var user models.User
+	if err := json.Unmarshal(respBody, &user); err != nil {
+		os.Exit(1)
+	}
+	fmt.Printf("%s, %s %s\n", user.LastName, user.FirstName, user.MiddleInitial)
+}
+
+func listUsers(apiKey *string) {
+	url := fmt.Sprintf("http://localhost:8090/api/v1/users")
+	respBody := Request("GET", url, apiKey, nil)
+	var out bytes.Buffer
+	json.Indent(&out, respBody, "", "    ")
+	out.WriteTo(os.Stdout)
+	fmt.Println()
+	var users []models.User
+	if err := json.Unmarshal(respBody, &users); err != nil {
+		os.Exit(1)
+	}
+	for _, y := range users {
+		fmt.Printf("%s, %s %s\n", y.LastName, y.FirstName, y.MiddleInitial)
+	}
 }
 
 func main() {

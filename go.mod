@@ -8,4 +8,5 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/rs/zerolog v1.18.0
 	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

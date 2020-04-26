@@ -9,3 +9,7 @@ build:
 	@cd cmd/client; \
 	go build; 
 	@mv cmd/client/client bin/client;
+	@make tidy --no-print-directory
+tidy:	
+	@echo "go mod tidy";
+	@go mod tidy;

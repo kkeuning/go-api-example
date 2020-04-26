@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/kkeuning/go-api-example/pkg/models"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 type usersSvc struct {
 	// db
-	logger *logrus.Logger
+	logger *zerolog.Logger
 }
 
 // Service ...
@@ -22,7 +22,7 @@ type Service interface {
 }
 
 // NewUsersSvc ...
-func NewUsersSvc(logger *logrus.Logger) (Service, error) {
+func NewUsersSvc(logger *zerolog.Logger) (Service, error) {
 	return &usersSvc{logger}, nil
 }
 

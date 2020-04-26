@@ -15,12 +15,9 @@ import (
 	"github.com/kkeuning/go-api-example/pkg/auth"
 	"github.com/kkeuning/go-api-example/pkg/services"
 	"github.com/kkeuning/go-api-example/pkg/services/users"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
-
-var logger = logrus.New()
-
-//var db *sqlx.DB
 
 func hello(e *services.Env) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -31,7 +28,7 @@ func hello(e *services.Env) http.Handler {
 func getUser(e *services.Env, usersSvc users.Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.WithValue(req.Context(), services.AcceptTypeKey, req.Header.Get("Accept"))
-		e.Log.Debug("*** Get User ***")
+		e.Log.Debug().Msg("*** Get User ***")
 		id := mux.Vars(req)["id"]
 		if id == "" {
 			w.WriteHeader(http.StatusBadRequest)
@@ -74,7 +71,7 @@ func listUsers(e *services.Env, usersSvc users.Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// Populate request context
 		ctx := context.WithValue(req.Context(), services.AcceptTypeKey, req.Header.Get("Accept"))
-		e.Log.Debug("*** List Users ***")
+		e.Log.Debug().Msg("*** List Users ***")
 		id := req.URL.Query().Get("id")
 		var payload *users.ListPayload
 		if id != "" {
@@ -111,33 +108,32 @@ func listUsers(e *services.Env, usersSvc users.Service) http.Handler {
 }
 
 func main() {
-	environment := envy.Get("ENVIRONMENT", "prod")
+	logger := &log.Logger
+	environment := envy.Get("ENVIRONMENT", "dev")
 	if environment == "prod" {
-		logger.SetFormatter(&logrus.JSONFormatter{})
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		logger.Info().Msg("*** Production Configuration ***")
+		logger.Debug().Msg("*** Debug Logging Disabled ***") // Won't display
 	} else {
-		// The TextFormatter is default, you don't actually have to do this.
-		logger.SetFormatter(&logrus.TextFormatter{})
+		zl := logger.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		logger = &zl
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		logger.Info().Msg("*** Non-production Configuration ***")
+		logger.Debug().Msg("*** Debug Logging Enabled ***")
 	}
-	// db, err := sqlx.Open("sqlite3", ":memory:")
-	// if err != nil {
-	// 	logger.Fatal("Unable to open db connection.")
-	// }
-	// db.Ping() // We're not doing much else with the db yet
-	// logger.Info("DB connected")
-
 	env := &services.Env{
+		// DB:  db, // Shared database connection goes here
 		Log: logger,
-		//DB:  db,
 	}
 
-	// Read API key from command line flag if provided.
 	var apiKey string
 	flag.StringVar(&apiKey, "apikey", "", "API key")
 	flag.Parse()
 
+	logger.Debug().Msg("*** Creating Users Service ***")
 	usersService, err := users.NewUsersSvc(env.Log)
 	if err != nil {
-		logger.Fatal("Failed to create users service.")
+		logger.Fatal().Msg("Failed to create users service.")
 	}
 
 	r := mux.NewRouter()
@@ -154,5 +150,5 @@ func main() {
 	}
 
 	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
-	logger.Fatal(http.ListenAndServe(":8090", loggedRouter))
+	logger.Fatal().Msg(http.ListenAndServe(":8090", loggedRouter).Error())
 }

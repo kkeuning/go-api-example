@@ -1,8 +1,8 @@
 package services
 
 import (
-	"github.com/jmoiron/sqlx"
-	"github.com/sirupsen/logrus"
+	// "github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 )
 
 type contextKey int
@@ -18,6 +18,6 @@ const (
 
 // Env ...
 type Env struct {
-	DB  *sqlx.DB
-	Log *logrus.Logger
+	// DB  *sqlx.DB
+	Log *zerolog.Logger
 }

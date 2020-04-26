@@ -14,10 +14,14 @@ func listUsers(apiKey *string) {
 	if err != nil {
 		os.Exit(1)
 	}
+	req.Close = true
 	if apiKey != nil {
 		req.Header.Add("Authorization", *apiKey)
 	}
 	resp, err := client.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		os.Exit(1)
 	}
@@ -35,10 +39,14 @@ func showUserByID(id int, apiKey *string) {
 	if err != nil {
 		os.Exit(1)
 	}
+	req.Close = true
 	if apiKey != nil {
 		req.Header.Add("Authorization", *apiKey)
 	}
 	resp, err := client.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		os.Exit(1)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 type usersSvc struct {
-	// db
+	db     *models.UserStorage
 	logger *zerolog.Logger
 }
 
@@ -17,18 +17,20 @@ type Service interface {
 	Show(context.Context, *ShowPayload) (*models.User, error)
 	Delete(context.Context, *DeletePayload) error
 	Update(context.Context, *UpdatePayload) error
-	List(context.Context, *ListPayload) (*models.UserCollection, error)
-	Create(context.Context, *models.User) (*models.UserCollection, error)
+	List(context.Context, *ListPayload) ([]models.User, error)
+	Create(context.Context, *models.User) ([]models.User, error)
 }
 
 // NewUsersSvc ...
-func NewUsersSvc(logger *zerolog.Logger) (Service, error) {
-	return &usersSvc{logger}, nil
+func NewUsersSvc(logger *zerolog.Logger, db *models.UserStorage) (Service, error) {
+	return &usersSvc{
+		db:     db,
+		logger: logger,
+	}, nil
 }
 
-func (us *usersSvc) Create(ctx context.Context, payload *models.User) (*models.UserCollection, error) {
-	var uc *models.UserCollection
-	return uc, nil
+func (us *usersSvc) Create(ctx context.Context, payload *models.User) ([]models.User, error) {
+	return us.db.Users, nil
 }
 func (us *usersSvc) Delete(ctx context.Context, payload *DeletePayload) error {
 	return nil
@@ -45,26 +47,24 @@ func (e ErrorNotFound) Error() string {
 }
 
 // ListUsers ...
-func (us *usersSvc) List(ctx context.Context, payload *ListPayload) (*models.UserCollection, error) {
+func (us *usersSvc) List(ctx context.Context, payload *ListPayload) ([]models.User, error) {
 	if payload != nil {
-		for _, u := range models.Users.GetUsers() {
+		for _, u := range us.db.GetUsers() {
 			if u.ID == payload.ID {
-				uc := &models.UserCollection{
-					Users: []models.User{u},
-				}
+				uc := []models.User{u}
 				return uc, nil
 			}
 		}
 		return nil, &ErrorNotFound{}
 	}
 	// No id specified, list all users.
-	uc := &models.UserCollection{Users: models.Users.GetUsers()}
+	uc := us.db.GetUsers()
 	return uc, nil
 }
 
 // ShowUser ...
 func (us *usersSvc) Show(ctx context.Context, payload *ShowPayload) (*models.User, error) {
-	result, err := models.Users.GetUserByID(payload.ID)
+	result, err := us.db.GetUserByID(payload.ID)
 	if err != nil {
 		return nil, &ErrorNotFound{}
 	}

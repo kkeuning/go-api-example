@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kkeuning/go-api-example/pkg/auth"
+	"github.com/kkeuning/go-api-example/pkg/models"
 	"github.com/kkeuning/go-api-example/pkg/services"
 	"github.com/kkeuning/go-api-example/pkg/services/users"
 	"github.com/rs/zerolog"
@@ -96,7 +97,7 @@ func listUsers(e *services.Env, usersSvc users.Service) http.Handler {
 			fmt.Fprintf(w, "Error")
 			return
 		}
-		jusers, err := json.Marshal(userList.Users)
+		jusers, err := json.Marshal(&userList)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprintf(w, "Error")
@@ -131,7 +132,9 @@ func main() {
 	flag.Parse()
 
 	logger.Debug().Msg("*** Creating Users Service ***")
-	usersService, err := users.NewUsersSvc(env.Log)
+	uc := models.UserDB
+	uc.Log = env.Log
+	usersService, err := users.NewUsersSvc(env.Log, &uc)
 	if err != nil {
 		logger.Fatal().Msg("Failed to create users service.")
 	}

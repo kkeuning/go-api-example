@@ -3,6 +3,8 @@ package models
 import (
 	"fmt"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 // Pre-loaded users for demonstration purposes
@@ -26,12 +28,12 @@ var initialUsers = []User{
 	},
 }
 
-// Users is a package level variable acting as an in-memory user database
-var Users UserCollection
+// UserDB is a package level variable acting as an in-memory user database
+var UserDB UserStorage
 
 func init() {
 	for _, y := range initialUsers {
-		Users.AddUser(y)
+		UserDB.AddUser(y)
 	}
 }
 
@@ -45,13 +47,14 @@ type User struct {
 	UpdatedAt     *time.Time `json:"-"`
 }
 
-// UserCollection is a collection of user records
-type UserCollection struct {
+// UserStorage ...
+type UserStorage struct {
 	Users []User
+	Log   *zerolog.Logger
 }
 
 // AddUser will add a user if it doesn't already exist or return an error
-func (uc *UserCollection) AddUser(u User) (*User, error) {
+func (uc *UserStorage) AddUser(u User) (*User, error) {
 	nextID := len(uc.Users) + 1 // ID begins with 1
 	u.ID = nextID
 	for _, y := range uc.Users {
@@ -67,7 +70,7 @@ func (uc *UserCollection) AddUser(u User) (*User, error) {
 }
 
 // GetUserByID returns the user record matching privided ID
-func (uc UserCollection) GetUserByID(id int) (*User, error) {
+func (uc UserStorage) GetUserByID(id int) (*User, error) {
 	for _, y := range uc.Users {
 		if y.ID == id {
 			return &y, nil
@@ -78,7 +81,7 @@ func (uc UserCollection) GetUserByID(id int) (*User, error) {
 
 // GetUserByName will return the first user matching firstName and LastName
 // This may not work in the real world since names are not unique
-func (uc UserCollection) GetUserByName(firstName string, lastName string) (*User, error) {
+func (uc UserStorage) GetUserByName(firstName string, lastName string) (*User, error) {
 	for _, y := range uc.Users {
 		if y.FirstName == firstName && y.LastName == lastName {
 			return &y, nil
@@ -88,12 +91,13 @@ func (uc UserCollection) GetUserByName(firstName string, lastName string) (*User
 }
 
 // GetUsers returns the slice of all users
-func (uc UserCollection) GetUsers() []User {
+func (uc UserStorage) GetUsers() []User {
+	uc.Log.Debug().Msg("Getting all users from collection.")
 	return uc.Users
 }
 
 // UpdateUser will overwrite current user record with new data
-func (uc *UserCollection) UpdateUser(u User) error {
+func (uc *UserStorage) UpdateUser(u User) error {
 	for i := range uc.Users {
 		if uc.Users[i].ID == u.ID {
 			// Currently no partial updates supported since all struct fields are required

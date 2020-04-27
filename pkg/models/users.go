@@ -54,10 +54,10 @@ type UserStorage struct {
 }
 
 // AddUser will add a user if it doesn't already exist or return an error
-func (uc *UserStorage) AddUser(u User) (*User, error) {
-	nextID := len(uc.Users) + 1 // ID begins with 1
+func (us *UserStorage) AddUser(u User) (*User, error) {
+	nextID := len(us.Users) + 1 // ID begins with 1
 	u.ID = nextID
-	for _, y := range uc.Users {
+	for _, y := range us.Users {
 		if y.FirstName == u.FirstName && y.LastName == y.LastName {
 			// Not yet supporting multiple users of same name
 			return nil, fmt.Errorf("user with that name already exists")
@@ -65,13 +65,13 @@ func (uc *UserStorage) AddUser(u User) (*User, error) {
 	}
 	u.CreatedAt = &[]time.Time{time.Now().UTC()}[0]
 	u.UpdatedAt = &[]time.Time{time.Now().UTC()}[0]
-	uc.Users = append(uc.Users, u)
+	us.Users = append(us.Users, u)
 	return &u, nil
 }
 
 // GetUserByID returns the user record matching privided ID
-func (uc UserStorage) GetUserByID(id int) (*User, error) {
-	for _, y := range uc.Users {
+func (us UserStorage) GetUserByID(id int) (*User, error) {
+	for _, y := range us.Users {
 		if y.ID == id {
 			return &y, nil
 		}
@@ -81,8 +81,8 @@ func (uc UserStorage) GetUserByID(id int) (*User, error) {
 
 // GetUserByName will return the first user matching firstName and LastName
 // This may not work in the real world since names are not unique
-func (uc UserStorage) GetUserByName(firstName string, lastName string) (*User, error) {
-	for _, y := range uc.Users {
+func (us UserStorage) GetUserByName(firstName string, lastName string) (*User, error) {
+	for _, y := range us.Users {
 		if y.FirstName == firstName && y.LastName == lastName {
 			return &y, nil
 		}
@@ -91,18 +91,18 @@ func (uc UserStorage) GetUserByName(firstName string, lastName string) (*User, e
 }
 
 // GetUsers returns the slice of all users
-func (uc UserStorage) GetUsers() []User {
-	uc.Log.Debug().Msg("Getting all users from collection.")
-	return uc.Users
+func (us UserStorage) GetUsers() []User {
+	us.Log.Debug().Msg("Getting all users from collection.")
+	return us.Users
 }
 
 // UpdateUser will overwrite current user record with new data
-func (uc *UserStorage) UpdateUser(u User) error {
-	for i := range uc.Users {
-		if uc.Users[i].ID == u.ID {
+func (us *UserStorage) UpdateUser(u User) error {
+	for i := range us.Users {
+		if us.Users[i].ID == u.ID {
 			// Currently no partial updates supported since all struct fields are required
-			uc.Users[i] = u
-			uc.Users[i].UpdatedAt = &[]time.Time{time.Now().UTC()}[0]
+			us.Users[i] = u
+			us.Users[i].UpdatedAt = &[]time.Time{time.Now().UTC()}[0]
 			return nil
 		}
 	}

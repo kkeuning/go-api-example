@@ -110,10 +110,6 @@ func listUsers(e *services.Env, usersSvc users.Service) http.Handler {
 }
 
 func main() {
-	// Start gops agent
-	if err := agent.Listen(agent.Options{}); err != nil {
-		log.Fatal().Err(err)
-	}
 	logger := &log.Logger
 	environment := envy.Get("ENVIRONMENT", "dev")
 	if environment == "prod" {
@@ -123,6 +119,10 @@ func main() {
 	} else {
 		zl := logger.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 		logger = &zl
+		// Start gops agent
+		if err := agent.Listen(agent.Options{}); err != nil {
+			logger.Fatal().Err(err)
+		}
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		logger.Info().Msg("*** Non-production Configuration ***")
 		logger.Debug().Msg("*** Debug Logging Enabled ***")

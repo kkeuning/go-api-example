@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gobuffalo/envy"
+	"github.com/google/gops/agent"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kkeuning/go-api-example/pkg/auth"
@@ -109,6 +110,10 @@ func listUsers(e *services.Env, usersSvc users.Service) http.Handler {
 }
 
 func main() {
+	// Start gops agent
+	if err := agent.Listen(agent.Options{}); err != nil {
+		log.Fatal().Err(err)
+	}
 	logger := &log.Logger
 	environment := envy.Get("ENVIRONMENT", "dev")
 	if environment == "prod" {
